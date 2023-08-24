@@ -2,7 +2,7 @@
 
 Repo containing source code for the task sent. 
 
-This repo contains 2 smimlar but ever so different source codes.
+This repo contains 2 similar but ever so different source codes.
 
 **"CDH-Task-F2022-Alex-Heck-Code1"** 
 
