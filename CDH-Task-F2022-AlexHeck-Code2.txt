@@ -1,0 +1,111 @@
+#include <Servo.h>
+#include <SPI.h>
+#include <SD.h>
+#include <Wire.h>
+#include "RTClib.h"
+
+Servo myservo;
+int potPin = A0;
+int lastServoPos = -1;
+const int chipSelect = 10;
+RTC_DS1307 rtc;
+
+unsigned long previousMillis = 0;
+const unsigned long interval = 1000; // Log interval in milliseconds
+
+void setup() {
+  Serial.begin(9600);
+  myservo.attach(9);
+
+  // Initialize the SD card and RTC, retrying up to 3 times with a 2-second delay between attempts
+  initializeSD();
+  initializeRTC();
+
+  // Create a new file on the SD card
+  logToSDCard("Servo Position Log:");
+}
+
+void loop() {
+  unsigned long currentMillis = millis();
+  
+  if (currentMillis - previousMillis >= interval) {
+    previousMillis = currentMillis;
+
+    int potValue = analogRead(potPin);
+    int servoPos = map(potValue, 0, 1023, 0, 180);
+
+    // Log the servo angle every second
+    DateTime now = rtc.now();
+    logToSerialAndSD(now, servoPos);
+  }
+
+  int potValue = analogRead(potPin);
+  int servoPos = map(potValue, 0, 1023, 0, 180);
+
+  // Register and write data whenever the servo angle changes
+  if (servoPos != lastServoPos) {
+    DateTime now = rtc.now();
+    logToSerialAndSD(now, servoPos);
+    lastServoPos = servoPos;
+  }
+}
+
+void initializeSD() {
+  int sdRetryCount = 0;
+  while (sdRetryCount < 3) {
+    if (SD.begin(chipSelect)) {
+      break;
+    } else {
+      Serial.println("SD card initialization failed. Retrying...");
+      delay(2000);
+      sdRetryCount++;
+    }
+  }
+
+  if (sdRetryCount == 3) {
+    Serial.println("Failed to initialize SD card after 3 attempts. Program halted.");
+    while (true);
+  }
+}
+
+void initializeRTC() {
+  int rtcRetryCount = 0;
+  while (rtcRetryCount < 3) {
+    if (rtc.begin()) {
+      break;
+    } else {
+      Serial.println("RTC initialization failed. Retrying...");
+      delay(2000);
+      rtcRetryCount++;
+    }
+  }
+
+  if (rtcRetryCount == 3) {
+    Serial.println("Failed to initialize RTC module after 3 attempts. Program halted.");
+    while (true);
+  }
+
+  if (!rtc.isrunning()) {
+    Serial.println("RTC is NOT running!");
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  }
+}
+
+void logToSDCard(const char* logMessage) {
+  File dataFile = SD.open("servo_log.txt", FILE_WRITE);
+  if (dataFile) {
+    dataFile.println(logMessage);
+    dataFile.close();
+  }
+}
+
+void logToSerialAndSD(DateTime timestamp, int position) {
+  char logBuffer[50];
+  snprintf(logBuffer, sizeof(logBuffer), "[%04d/%02d/%02d %02d:%02d:%02d] Angle: %d degrees",
+           timestamp.year(), timestamp.month(), timestamp.day(),
+           timestamp.hour(), timestamp.minute(), timestamp.second(),
+           position);
+
+  Serial.println(logBuffer);
+  logToSDCard(logBuffer);
+}
