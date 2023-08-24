@@ -1,6 +1,6 @@
 # CDH-Task-F2022-Alex-Heck
 
-Repo containing source code for the tasks sent. 
+Repo containing source code for the task sent. 
 
 This repo contains 2 smimlar but ever so different source codes.
 
