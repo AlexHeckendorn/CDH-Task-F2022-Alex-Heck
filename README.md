@@ -17,4 +17,4 @@ Will print and register data from Servo Motor **regardless** if there is a chang
 
 WOWKI Project running Code 2 can be found @
 
-**https://wokwi.com/projects/373988376749641729**
+**https://wokwi.com/projects/373996398734404609**
